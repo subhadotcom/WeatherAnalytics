@@ -1,0 +1,40 @@
+Weather Station Log - Mixed Format Data
+==========================================
+
+2024-04-01 07:30:00, 14.2, Downtown
+2024-04-01 11:30:00, 19.8, Downtown  
+2024-04-01 15:30:00, 22.4, Downtown
+2024-04-01 19:30:00, 16.7, Downtown
+2024-04-01 23:30:00, 11.3, Downtown
+
+[INFO] Sensor Airport reading: 2024-04-02T08:00:00 temperature=31.5°C
+[INFO] Sensor Airport reading: 2024-04-02T12:00:00 temperature=35.7°C  
+[INFO] Sensor Airport reading: 2024-04-02T16:00:00 temperature=38.9°C
+[INFO] Sensor Airport reading: 2024-04-02T20:00:00 temperature=32.1°C
+[INFO] Sensor Airport reading: 2024-04-03T00:00:00 temperature=26.8°C
+
+Temperature readings from Rural station:
+2024-04-03 06:15:00 temp: 2.3
+2024-04-03 10:15:00 temp: 8.7
+2024-04-03 14:15:00 temp: 13.2
+2024-04-03 18:15:00 temp: 9.4
+2024-04-03 22:15:00 temp: 3.8
+
+EXTREME WEATHER ALERT - Industrial District
+2024-04-04 09:00:00 -8.4 Industrial
+2024-04-04 13:00:00 -3.7 Industrial
+2024-04-04 17:00:00 -1.2 Industrial  
+2024-04-04 21:00:00 -6.9 Industrial
+2024-04-05 01:00:00 -11.8 Industrial
+
+Hot day recorded at Beach station:
+2024-04-05T12:30:00Z temp=41.2°C location=Beach
+2024-04-05T16:30:00Z temp=43.7°C location=Beach
+2024-04-05T20:30:00Z temp=39.4°C location=Beach
+2024-04-06T00:30:00Z temp=34.1°C location=Beach
+2024-04-06T04:30:00Z temp=28.9°C location=Beach
+
+Final readings for the week:
+2024-04-06 18:00:00, 17.6, Summary_Station
+2024-04-06 22:00:00, 12.8, Summary_Station
+2024-04-07 02:00:00, 8.4, Summary_Station
