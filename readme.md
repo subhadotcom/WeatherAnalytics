@@ -83,6 +83,8 @@ The application follows a modular architecture with clear separation of concerns
 - **IO**: File and stream operations
 - **Re**: Regular expressions for text processing
 
+## Deployment Strategy
+
 ### Configuration Files
 - **Streamlit Config**: Custom server settings in `.streamlit/config.toml`
 - **Project Dependencies**: Managed through `pyproject.toml` with uv lock file
