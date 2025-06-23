@@ -83,14 +83,6 @@ The application follows a modular architecture with clear separation of concerns
 - **IO**: File and stream operations
 - **Re**: Regular expressions for text processing
 
-## Deployment Strategy
-
-### Replit Configuration
-- **Runtime**: Python 3.11 with Nix package management
-- **Deployment Target**: Autoscale deployment for production
-- **Port Configuration**: Application runs on port 5000
-- **Process Management**: Streamlit server with custom configuration
-
 ### Configuration Files
 - **Streamlit Config**: Custom server settings in `.streamlit/config.toml`
 - **Project Dependencies**: Managed through `pyproject.toml` with uv lock file
