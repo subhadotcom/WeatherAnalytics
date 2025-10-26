@@ -1,40 +1,73 @@
-import pandas as pd
-import numpy as np
-from datetime import datetime, date
-from typing import Union, List, Dict, Any
-import os
+# Standard library imports
 import json
+import os
+from datetime import date, datetime
+from typing import Any, Dict, List, Union
+
+# Third-party imports
+import numpy as np
+import pandas as pd
 
 def format_file_size(size_bytes: int) -> str:
     """
-    Format file size in human readable format.
+    Convert file size in bytes to a human-readable string.
+    
+    Converts bytes to the most appropriate unit (B, KB, MB, GB, TB)
+    with 2 decimal places of precision.
     
     Args:
-        size_bytes: File size in bytes
+        size_bytes: The file size in bytes (must be non-negative integer)
         
     Returns:
-        Formatted file size string
+        str: Formatted file size string (e.g., "1.46 MB")
+        
+    Example:
+        >>> format_file_size(1536)
+        '1.5 KB'
     """
+    if not isinstance(size_bytes, int) or size_bytes < 0:
+        raise ValueError("Size must be a non-negative integer")
+        
     if size_bytes == 0:
         return "0 B"
     
-    size_names = ["B", "KB", "MB", "GB", "TB"]
-    i = int(np.floor(np.log(size_bytes) / np.log(1024)))
-    p = np.power(1024, i)
+    size_names = ("B", "KB", "MB", "GB", "TB")
+    i = min(int(np.floor(np.log(size_bytes) / np.log(1024))), len(size_names) - 1)
+    p = 1024 ** i
     s = round(size_bytes / p, 2)
+    
+    # Remove .0 for whole numbers
+    if s.is_integer():
+        s = int(s)
     
     return f"{s} {size_names[i]}"
 
-def validate_date_range(start_date: Union[date, datetime], end_date: Union[date, datetime]) -> bool:
+def validate_date_range(
+    start_date: Union[date, datetime, None], 
+    end_date: Union[date, datetime, None]
+) -> bool:
     """
-    Validate that end date is after start date.
+    Validate that a date range is logically valid.
+    
+    A date range is considered valid if:
+    - Either date is None (treated as open-ended range)
+    - End date is on or after start date
     
     Args:
-        start_date: Start date
-        end_date: End date
+        start_date: The start date of the range (can be None for open start)
+        end_date: The end date of the range (can be None for open end)
         
     Returns:
-        True if valid date range, False otherwise
+        bool: True if the date range is valid, False otherwise
+        
+    Example:
+        >>> from datetime import date
+        >>> validate_date_range(date(2023, 1, 1), date(2023, 1, 2))
+        True
+        >>> validate_date_range(date(2023, 1, 2), date(2023, 1, 1))
+        False
+        >>> validate_date_range(None, date(2023, 1, 1))  # Open start
+        True
     """
     if start_date is None or end_date is None:
         return True
@@ -43,14 +76,25 @@ def validate_date_range(start_date: Union[date, datetime], end_date: Union[date,
 
 def detect_data_format(file_content: bytes, filename: str) -> str:
     """
-    Detect the format of uploaded data file.
+    Detect the format of a data file based on its content and extension.
+    
+    Supports detection of:
+    - CSV (Comma-Separated Values)
+    - JSON (JavaScript Object Notation)
+    - Log files (plain text with timestamps)
     
     Args:
-        file_content: Raw file content
-        filename: Name of the file
+        file_content: Raw binary content of the file
+        filename: Original filename (used for extension checking)
         
     Returns:
-        Detected format ('csv', 'json', 'log', 'unknown')
+        str: Detected format as one of: 'csv', 'json', 'log', or 'unknown'
+        
+    Example:
+        >>> detect_data_format(b'name,age\nAlice,30', 'data.csv')
+        'csv'
+        >>> detect_data_format(b'{"name": "Alice"}', 'data.json')
+        'json'
     """
     try:
         # First check file extension
@@ -87,15 +131,28 @@ def detect_data_format(file_content: bytes, filename: str) -> str:
 
 def clean_temperature_value(value: Any) -> float:
     """
-    Clean and convert temperature value to float.
+    Clean and convert a temperature value to a standardized float.
+    
+    Handles various input formats including:
+    - Numeric values (int, float)
+    - Strings with units (e.g., '23.5°C', '75F')
+    - String representations of numbers
     
     Args:
-        value: Raw temperature value
+        value: Input temperature value to clean (any type)
         
     Returns:
-        Cleaned temperature as float, or NaN if invalid
+        float: Cleaned temperature as float, or np.nan if value cannot be converted
+        
+    Example:
+        >>> clean_temperature_value('23.5°C')
+        23.5
+        >>> clean_temperature_value('75F')
+        75.0
+        >>> clean_temperature_value('invalid')
+        nan
     """
-    if pd.isna(value):
+    if pd.isna(value) or value is None:
         return np.nan
     
     try:

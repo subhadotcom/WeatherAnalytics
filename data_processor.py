@@ -1,28 +1,47 @@
-import pandas as pd
-import numpy as np
-import json
+# Standard library imports
 import io
+import json
 import re
 from datetime import datetime
 from typing import Union, List, Dict, Any
 
+# Third-party imports
+import pandas as pd
+import numpy as np
+
 class WeatherDataProcessor:
     """
-    Handles processing of various weather data formats including CSV, JSON, and text logs.
+    A processor for handling and standardizing weather data from multiple formats.
+    
+    This class provides methods to process weather data from various file formats
+    (CSV, JSON, text logs) and convert them into a standardized pandas DataFrame
+    with consistent column names and data types.
+    
+    Supported formats:
+        - CSV files with various encodings
+        - JSON files (both array and object formats)
+        - JSONL (JSON Lines) format
+        - Text logs with multiple pattern formats
     """
     
     def __init__(self):
+        """Initialize the WeatherDataProcessor with supported file formats."""
         self.supported_formats = ['csv', 'json', 'txt', 'log']
         
     def process_csv(self, file_content: bytes) -> pd.DataFrame:
         """
-        Process CSV weather data files.
+        Process and standardize weather data from CSV files.
+        
+        Handles multiple encodings and performs data cleaning and standardization.
         
         Args:
-            file_content: Raw file content as bytes
+            file_content: Raw file content as bytes, expected to be in CSV format
             
         Returns:
-            Processed DataFrame with standardized columns
+            pd.DataFrame: Processed DataFrame with standardized column names and data types
+            
+        Raises:
+            ValueError: If the file cannot be decoded or processed
         """
         try:
             # Try different encodings
@@ -57,13 +76,19 @@ class WeatherDataProcessor:
     
     def process_json(self, file_content: bytes) -> pd.DataFrame:
         """
-        Process JSON weather data files.
+        Process and standardize weather data from JSON files.
+        
+        Supports both JSON arrays and objects, including nested structures.
+        Also handles JSONL (JSON Lines) format.
         
         Args:
-            file_content: Raw file content as bytes
+            file_content: Raw file content as bytes, expected to be in JSON format
             
         Returns:
-            Processed DataFrame with standardized columns
+            pd.DataFrame: Processed DataFrame with standardized column names and data types
+            
+        Raises:
+            ValueError: If the JSON is malformed or cannot be processed
         """
         try:
             content_str = file_content.decode('utf-8')
@@ -115,13 +140,19 @@ class WeatherDataProcessor:
     
     def process_text_log(self, file_content: bytes) -> pd.DataFrame:
         """
-        Process text log weather data files.
+        Process and extract weather data from text log files.
+        
+        Supports multiple log formats and patterns, with flexible parsing
+        for timestamps, temperatures, and locations.
         
         Args:
-            file_content: Raw file content as bytes
+            file_content: Raw file content as bytes, expected to be a text log
             
         Returns:
-            Processed DataFrame with standardized columns
+            pd.DataFrame: Processed DataFrame with standardized column names and data types
+            
+        Raises:
+            ValueError: If no valid weather data is found in the log file
         """
         try:
             content_str = file_content.decode('utf-8')

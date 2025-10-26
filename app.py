@@ -1,19 +1,34 @@
-import streamlit as st
-import pandas as pd
+"""
+Weather Analytics Application - Hot & Cold Days Analysis
+A comprehensive Streamlit application for analyzing weather sensor data to identify
+and visualize temperature patterns, with focus on hot and cold day classification.
+Provides data processing, statistical analysis, interactive visualizations, and
+export capabilities for weather data analysis.
+"""
+
+# Standard library imports
+import io
+import json
+import os
+from datetime import datetime, timedelta
+
+# Third-party imports
 import numpy as np
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime, timedelta
-import json
-import io
-import os
+import streamlit as st
 
+# Local imports
 from data_processor import WeatherDataProcessor
 from weather_analyzer import WeatherAnalyzer
 from visualizations import WeatherVisualizer
 from utils import format_file_size, validate_date_range
 
-# Page configuration
+# =============================================================================
+# PAGE CONFIGURATION
+# =============================================================================
+
 st.set_page_config(
     page_title="Weather Data Analysis - Hot & Cold Days",
     page_icon="🌡️",
@@ -21,21 +36,39 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Initialize session state
+# =============================================================================
+# SESSION STATE INITIALIZATION
+# =============================================================================
+
+# Initialize session state for data persistence
 if 'processed_data' not in st.session_state:
     st.session_state.processed_data = None
 if 'analysis_results' not in st.session_state:
     st.session_state.analysis_results = None
 
+# =============================================================================
+# MAIN APPLICATION FUNCTION
+# =============================================================================
+
 def main():
+    """
+    Main application function that orchestrates the weather data analysis workflow.
+    Handles data upload, processing, analysis, visualization, and export functionality.
+    """
     st.title("🌡️ Weather Data Analysis for Hot & Cold Days")
-    st.markdown("Analyze weather sensor data to identify and visualize temperature patterns")
+    st.markdown(
+        "Analyze weather sensor data to identify and visualize temperature patterns. "
+        "Classify days as hot, cold, or normal based on customizable temperature thresholds."
+    )
     
-    # Sidebar for configuration
+    # =============================================================================
+    # SIDEBAR CONFIGURATION
+    # =============================================================================
+    
     with st.sidebar:
         st.header("Configuration")
         
-        # Temperature thresholds
+        # Temperature threshold configuration
         st.subheader("Temperature Thresholds")
         hot_threshold = st.number_input(
             "Hot Day Threshold (°C)", 
@@ -55,7 +88,7 @@ def main():
             help="Temperature below which a day is considered cold"
         )
         
-        # Data filtering options
+        # Data filtering configuration
         st.subheader("Data Filters")
         enable_date_filter = st.checkbox("Enable Date Range Filter")
         
@@ -69,6 +102,7 @@ def main():
                 value=datetime.now()
             )
             
+            # Validate date range
             if not validate_date_range(start_date, end_date):
                 st.error("End date must be after start date")
                 return
@@ -76,7 +110,7 @@ def main():
             start_date = None
             end_date = None
         
-        # Temperature range filter
+        # Temperature range filter configuration
         enable_temp_filter = st.checkbox("Enable Temperature Range Filter")
         if enable_temp_filter:
             temp_range = st.slider(
@@ -89,13 +123,20 @@ def main():
         else:
             temp_range = None
     
-    # Main content area
+    # =============================================================================
+    # MAIN CONTENT AREA - TABBED INTERFACE
+    # =============================================================================
+    
     tab1, tab2, tab3, tab4 = st.tabs(["📁 Data Upload", "📊 Analysis", "📈 Visualizations", "📋 Summary"])
+    
+    # =============================================================================
+    # DATA UPLOAD TAB
+    # =============================================================================
     
     with tab1:
         st.header("Data Upload and Processing")
         
-        # File upload options
+        # Data input method selection
         upload_method = st.radio(
             "Choose data input method:",
             ["Upload Files", "Use Sample Data"],
@@ -105,6 +146,7 @@ def main():
         uploaded_files = None
         sample_data_selected = None
         
+        # Handle file upload method
         if upload_method == "Upload Files":
             uploaded_files = st.file_uploader(
                 "Upload weather log files",
@@ -113,7 +155,7 @@ def main():
                 help="Supports CSV, JSON, and text log formats"
             )
         else:
-            # Sample data selection
+            # Handle sample data selection
             sample_files = {
                 "Weather Stations CSV (40 records)": "sample_data/weather_data.csv",
                 "Multi-Location JSON (16 records)": "sample_data/weather_data.json", 
@@ -121,7 +163,10 @@ def main():
                 "Mixed Format Text (13 records)": "sample_data/mixed_format.txt"
             }
             
-            st.info("Using built-in sample data to avoid upload issues. This demonstrates the full functionality with real weather sensor data.")
+            st.info(
+                "Using built-in sample data to avoid upload issues. This demonstrates "
+                "the full functionality with real weather sensor data."
+            )
             
             selected_samples = st.multiselect(
                 "Select sample data files to analyze:",
@@ -133,6 +178,7 @@ def main():
             if selected_samples:
                 sample_data_selected = [sample_files[name] for name in selected_samples]
         
+        # Process selected files
         if uploaded_files or sample_data_selected:
             st.subheader("Selected Files")
             
@@ -141,6 +187,7 @@ def main():
             file_info = []
             
             if uploaded_files:
+                # Process uploaded files information
                 for file in uploaded_files:
                     size = len(file.getvalue())
                     total_size += size
@@ -150,6 +197,7 @@ def main():
                         'Type': file.name.split('.')[-1].upper()
                     })
             elif sample_data_selected:
+                # Process sample files information
                 for file_path in sample_data_selected:
                     try:
                         size = os.path.getsize(file_path)
@@ -166,16 +214,18 @@ def main():
                             'Type': file_path.split('.')[-1].upper()
                         })
             
+            # Display file summary
             df_files = pd.DataFrame(file_info)
             st.dataframe(df_files, use_container_width=True)
             if total_size > 0:
                 st.info(f"Total size: {format_file_size(total_size)}")
             
-            # Process data button
+            # Data processing button
             if st.button("Process Data", type="primary"):
                 if not uploaded_files and not sample_data_selected:
                     st.error("Please select files to process first.")
                     st.stop()
+                
                 with st.spinner("Processing weather data..."):
                     try:
                         processor = WeatherDataProcessor()
@@ -185,6 +235,7 @@ def main():
                         files_to_process = uploaded_files if uploaded_files else sample_data_selected
                         progress_bar = st.progress(0)
                         
+                        # Process each file individually
                         for i, file in enumerate(files_to_process):
                             if uploaded_files:
                                 # Handle uploaded files
@@ -200,6 +251,7 @@ def main():
                                     st.error(f"Error reading sample file {file}: {str(e)}")
                                     continue
                             
+                            # Process file based on format
                             if filename.endswith('.csv'):
                                 data = processor.process_csv(file_content)
                             elif filename.endswith('.json'):
@@ -210,10 +262,10 @@ def main():
                             all_data.append(data)
                             progress_bar.progress((i + 1) / len(files_to_process))
                         
-                        # Combine all data
+                        # Combine all processed data
                         combined_data = pd.concat(all_data, ignore_index=True)
                         
-                        # Apply filters
+                        # Apply configured filters
                         if enable_date_filter:
                             combined_data = processor.filter_by_date_range(
                                 combined_data, start_date, end_date
@@ -224,21 +276,23 @@ def main():
                                 combined_data, temp_range[0], temp_range[1]
                             )
                         
+                        # Store processed data in session state
                         st.session_state.processed_data = combined_data
                         st.success(f"Successfully processed {len(combined_data)} weather records!")
                         
-                        # Display sample data
+                        # Display sample data preview
                         st.subheader("Sample Data Preview")
                         st.dataframe(combined_data.head(10), use_container_width=True)
                         
                     except Exception as e:
                         st.error(f"Error processing data: {str(e)}")
         
-        # Data quality information
+        # Display data quality information
         if st.session_state.processed_data is not None:
             st.subheader("Data Quality Summary")
             data = st.session_state.processed_data
             
+            # Data quality metrics
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
@@ -256,6 +310,10 @@ def main():
                 unique_locations = data['location'].nunique() if 'location' in data.columns else 0
                 st.metric("Unique Locations", unique_locations)
     
+    # =============================================================================
+    # ANALYSIS TAB
+    # =============================================================================
+    
     with tab2:
         st.header("Weather Analysis")
         
@@ -263,6 +321,7 @@ def main():
             st.warning("Please upload and process data first in the Data Upload tab.")
             return
         
+        # Run analysis button
         if st.button("Run Analysis", type="primary"):
             with st.spinner("Analyzing weather patterns..."):
                 try:
@@ -283,6 +342,7 @@ def main():
         if st.session_state.analysis_results:
             results = st.session_state.analysis_results
             
+            # Temperature classification metrics
             st.subheader("Temperature Classification")
             
             col1, col2, col3 = st.columns(3)
@@ -308,7 +368,7 @@ def main():
                     delta=f"{results['normal_days_percentage']:.1f}%"
                 )
             
-            # Temperature statistics
+            # Detailed temperature statistics
             st.subheader("Temperature Statistics")
             
             stats_data = {
@@ -338,6 +398,10 @@ def main():
             
             st.dataframe(pd.DataFrame(stats_data), use_container_width=True)
     
+    # =============================================================================
+    # VISUALIZATIONS TAB
+    # =============================================================================
+    
     with tab3:
         st.header("Data Visualizations")
         
@@ -349,11 +413,12 @@ def main():
             st.warning("Please run analysis first.")
             return
         
+        # Initialize visualizer and get data
         visualizer = WeatherVisualizer()
         data = st.session_state.processed_data
         results = st.session_state.analysis_results
         
-        # Visualization options
+        # Visualization type selection
         viz_option = st.selectbox(
             "Select Visualization",
             [
@@ -366,6 +431,7 @@ def main():
             ]
         )
         
+        # Create selected visualization
         try:
             if viz_option == "Temperature Time Series":
                 fig = visualizer.create_temperature_timeseries(data, hot_threshold, cold_threshold)
@@ -397,6 +463,10 @@ def main():
         except Exception as e:
             st.error(f"Error creating visualization: {str(e)}")
     
+    # =============================================================================
+    # SUMMARY TAB
+    # =============================================================================
+    
     with tab4:
         st.header("Analysis Summary")
         
@@ -407,7 +477,7 @@ def main():
         results = st.session_state.analysis_results
         data = st.session_state.processed_data
         
-        # Summary metrics
+        # Key insights display
         st.subheader("Key Insights")
         
         col1, col2 = st.columns(2)
@@ -436,14 +506,14 @@ def main():
             st.write(f"**Period:** {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
             st.write(f"**Duration:** {(end_date - start_date).days} days")
         
-        # Export options
+        # Export functionality
         st.subheader("Export Results")
         
         col1, col2 = st.columns(2)
         
         with col1:
             if st.button("Download Analysis Results"):
-                # Create summary report
+                # Create comprehensive summary report
                 report = {
                     'analysis_date': datetime.now().isoformat(),
                     'thresholds': {
@@ -460,6 +530,7 @@ def main():
                     }
                 }
                 
+                # Convert report to JSON and provide download
                 json_str = json.dumps(report, indent=2, default=str)
                 st.download_button(
                     label="Download JSON Report",
@@ -470,6 +541,7 @@ def main():
         
         with col2:
             if st.button("Download Processed Data"):
+                # Export processed data as CSV
                 csv_data = data.to_csv(index=False)
                 st.download_button(
                     label="Download CSV Data",
@@ -477,6 +549,10 @@ def main():
                     file_name=f"processed_weather_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                     mime="text/csv"
                 )
+
+# =============================================================================
+# APPLICATION ENTRY POINT
+# =============================================================================
 
 if __name__ == "__main__":
     main()

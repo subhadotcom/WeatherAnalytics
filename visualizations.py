@@ -1,27 +1,70 @@
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import pandas as pd
-import numpy as np
+# Standard library imports
 from datetime import datetime, timedelta
 import calendar
 
+# Third-party imports
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 class WeatherVisualizer:
     """
-    Creates interactive visualizations for weather data analysis.
+    A class for creating interactive visualizations of weather data.
+    
+    This class provides methods to generate various visualizations including:
+    - Temperature time series with threshold highlighting
+    - Temperature distribution histograms with box plots
+    - Calendar heatmaps for temporal pattern analysis
+    
+    Attributes:
+        color_palette (dict): A dictionary of color codes used for visualizations
     """
     
     def __init__(self):
+        """Initialize the WeatherVisualizer with a default color palette.
+        
+        The color palette includes colors for:
+        - Hot temperatures
+        - Cold temperatures
+        - Normal temperatures
+        - Background
+        - Text
+        """
         self.color_palette = {
-            'hot': '#FF6B6B',
-            'cold': '#4ECDC4',
-            'normal': '#45B7D1',
-            'background': '#F8F9FA',
-            'text': '#2C3E50'
+            'hot': '#FF6B6B',      # Coral red for hot temperatures
+            'cold': '#4ECDC4',     # Turquoise for cold temperatures
+            'normal': '#45B7D1',   # Sky blue for normal temperatures
+            'background': '#F8F9FA',  # Light gray for plot backgrounds
+            'text': '#2C3E50'      # Dark gray for text
         }
     
-    def create_temperature_timeseries(self, df: pd.DataFrame, hot_threshold: float, cold_threshold: float) -> go.Figure:
-        """Create interactive temperature time series plot."""
+    def create_temperature_timeseries(
+        self, 
+        df: pd.DataFrame, 
+        hot_threshold: float, 
+        cold_threshold: float
+    ) -> go.Figure:
+        """
+        Create an interactive time series plot of temperature data.
+        
+        The plot includes:
+        - Line plot of temperature over time
+        - Points colored by temperature classification (hot/cold/normal)
+        - Horizontal lines indicating temperature thresholds
+        
+        Args:
+            df: DataFrame containing temperature data with 'timestamp' and 'temperature' columns
+            hot_threshold: Temperature above which days are considered 'hot'
+            cold_threshold: Temperature below which days are considered 'cold'
+            
+        Returns:
+            plotly.graph_objects.Figure: Interactive time series plot
+            
+        Note:
+            If no timestamp data is available, creates a simple scatter plot of temperatures
+        """
         if 'timestamp' not in df.columns or df['timestamp'].isna().all():
             # Create a simple scatter plot if no timestamps
             fig = px.scatter(
@@ -87,8 +130,27 @@ class WeatherVisualizer:
         
         return fig
     
-    def create_temperature_distribution(self, df: pd.DataFrame, hot_threshold: float, cold_threshold: float) -> go.Figure:
-        """Create temperature distribution histogram with density curve."""
+    def create_temperature_distribution(
+        self, 
+        df: pd.DataFrame, 
+        hot_threshold: float, 
+        cold_threshold: float
+    ) -> go.Figure:
+        """
+        Create a combined histogram and box plot of temperature distribution.
+        
+        The figure includes:
+        - Top: Histogram of temperature distribution with threshold lines
+        - Bottom: Box plots grouped by temperature classification
+        
+        Args:
+            df: DataFrame containing temperature data with 'temperature' column
+            hot_threshold: Temperature threshold for 'hot' classification
+            cold_threshold: Temperature threshold for 'cold' classification
+            
+        Returns:
+            plotly.graph_objects.Figure: Combined histogram and box plot figure
+        """
         fig = make_subplots(
             rows=2, cols=1,
             subplot_titles=('Temperature Distribution', 'Box Plot by Classification'),
@@ -157,8 +219,29 @@ class WeatherVisualizer:
         
         return fig
     
-    def create_calendar_heatmap(self, df: pd.DataFrame, hot_threshold: float, cold_threshold: float) -> go.Figure:
-        """Create calendar heatmap of temperature patterns."""
+    def create_calendar_heatmap(
+        self, 
+        df: pd.DataFrame, 
+        hot_threshold: float, 
+        cold_threshold: float
+    ) -> go.Figure:
+        """
+        Create a calendar heatmap visualization of temperature patterns.
+        
+        The heatmap shows daily average temperatures color-coded by value,
+        with months as columns and days of the week as rows.
+        
+        Args:
+            df: DataFrame containing temperature data with 'timestamp' column
+            hot_threshold: Temperature threshold for 'hot' classification
+            cold_threshold: Temperature threshold for 'cold' classification
+            
+        Returns:
+            plotly.graph_objects.Figure: Calendar heatmap figure
+            
+        Note:
+            Returns an informative message if timestamp data is missing or invalid
+        """
         if 'timestamp' not in df.columns or df['timestamp'].isna().all():
             # Create a simple message plot if no timestamp data
             fig = go.Figure()
